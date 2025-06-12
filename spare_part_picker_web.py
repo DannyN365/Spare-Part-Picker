@@ -47,7 +47,7 @@ if not filtered.empty:
     filtered = filtered.drop_duplicates(subset=["Part #"]).sort_values(by="Part Name").head(50)
 
     # Toggle: Show/hide model compatibility in dropdown
-    show_compat = st.toggle("Show compatible models in dropdown", value=True)
+    show_compat = st.toggle("Show compatible models in dropdown", value=False)
 
     # Build dropdown label
     def make_label(row):
