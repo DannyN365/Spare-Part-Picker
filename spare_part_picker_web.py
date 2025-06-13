@@ -92,6 +92,9 @@ if not filtered.empty:
         default=valid_previous_selection,
         key="part_selector"
     )
+# After all filtering:
+if (model_number or model_name) and filtered.empty:
+    st.warning("No matches found. Please refine your search.")
 
     # Update selection into session state
     st.session_state.previous_selection = list(set(st.session_state.previous_selection + selection))
@@ -140,7 +143,3 @@ if selection:
         st.dataframe(export_df, use_container_width=True)
         csv = export_df.to_csv(index=False).encode("utf-8")
         st.download_button("📥 Download as CSV", data=csv, file_name="spare_parts_order.csv", mime="text/csv")
-
-else:
-    if model_number or model_name:
-        st.warning("No matches found. Please refine your search.")
