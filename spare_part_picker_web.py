@@ -11,6 +11,13 @@ def load_data():
     return df, compatibility
 
 df, compatibility_map = load_data()
+# Initialize session state for tracking search input
+if "last_model_number" not in st.session_state:
+    st.session_state.last_model_number = ""
+if "last_model_name" not in st.session_state:
+    st.session_state.last_model_name = ""
+if "previous_selection" not in st.session_state:
+    st.session_state.previous_selection = []
 
 # === App Title ===
 st.title("🔧 Spare Part Picker")
@@ -22,6 +29,18 @@ with col1:
     model_number = st.text_input("Enter Model Number")
 with col2:
     model_name = st.text_input("Or search by Model Name")
+
+# Detect search term change and reset selection if needed
+if (
+    model_number != st.session_state.last_model_number
+    or model_name != st.session_state.last_model_name
+):
+    st.session_state.previous_selection = []
+
+# Update last known inputs
+st.session_state.last_model_number = model_number
+st.session_state.last_model_name = model_name
+
 
 # === Filter Matching Models ===
 filtered = pd.DataFrame()
@@ -56,23 +75,26 @@ if not filtered.empty:
 
     filtered["Label"] = filtered.apply(make_label, axis=1)
 
-    # Load previous selection from session
-    st.session_state.setdefault("previous_selection", [])
-
     # === Part Selection ===
     selection = []
     if search_term:
         st.write("### Spare Parts to Order")
         part_ids = filtered["Part #"].tolist()
         labels = dict(zip(part_ids, filtered["Label"]))
+    
+        # ✅ Fix: indent this inside the block
+        valid_previous_selection = [pid for pid in st.session_state.previous_selection if pid in part_ids]
+    
         selection = st.multiselect(
             "Select Parts to Order (live filtered)",
             options=part_ids,
             format_func=lambda pid: labels.get(pid, pid),
-            default=st.session_state.previous_selection,
+            default=valid_previous_selection,
             key="part_selector"
         )
         st.session_state.previous_selection = selection
+
+
 
     # === Compatibility Overview
     if selection:
