@@ -82,28 +82,25 @@ if not filtered.empty:
 
     # === Part Selection ===
     part_ids = filtered["Part #"].tolist()
-labels = dict(zip(part_ids, filtered["Label"]))
+    labels = dict(zip(part_ids, filtered["Label"]))
 
-# Keep only valid selections based on current results
-valid_previous_selection = [pid for pid in st.session_state.previous_selection if pid in part_ids]
+    # Keep only valid selections based on current results
+    valid_previous_selection = [pid for pid in st.session_state.previous_selection if pid in part_ids]
 
-# Always show the multiselect if we have filtered results
-selection = st.multiselect(
-    "Select Parts to Order (live filtered)",
-    options=part_ids,
-    format_func=lambda pid: labels.get(pid, pid),
-    default=valid_previous_selection,
-    key="part_selector"
-)
+    # Always show the multiselect if we have filtered results
+    selection = st.multiselect(
+        "Select Parts to Order (live filtered)",
+        options=part_ids,
+        format_func=lambda pid: labels.get(pid, pid),
+        default=valid_previous_selection,
+        key="part_selector"
+    )
 
-# Update session state with latest selection
-st.session_state.previous_selection = selection
+    # Update session state with latest selection
+    st.session_state.previous_selection = selection
 
-# Use session state to continue showing Step 2 and 3
-selection = st.session_state.previous_selection
-
-
-
+    # Use session state to continue showing Step 2 and 3
+    selection = st.session_state.previous_selection
 
     # === Compatibility Overview
     if selection:
@@ -128,7 +125,7 @@ selection = st.session_state.previous_selection
             order_list.append({
                 "Part #": part_num,
                 "Part Name": part_row["Part Name"],
-               "Model Name": part_row["Model Name"],
+                "Model Name": part_row["Model Name"],  # Only selected unit's model
                 "Quantity": qty
             })
 
@@ -139,6 +136,7 @@ selection = st.session_state.previous_selection
             st.dataframe(export_df, use_container_width=True)
             csv = export_df.to_csv(index=False).encode("utf-8")
             st.download_button("📥 Download as CSV", data=csv, file_name="spare_parts_order.csv", mime="text/csv")
+
 
 else:
     if model_number or model_name:
