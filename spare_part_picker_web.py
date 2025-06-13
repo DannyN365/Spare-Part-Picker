@@ -81,23 +81,27 @@ if not filtered.empty:
     filtered["Label"] = filtered.apply(make_label, axis=1)
 
     # === Part Selection ===
-    selection = []
-    if search_term:
-        st.write("### Spare Parts to Order")
-        part_ids = filtered["Part #"].tolist()
-        labels = dict(zip(part_ids, filtered["Label"]))
-    
-        # ✅ Fix: indent this inside the block
-        valid_previous_selection = [pid for pid in st.session_state.previous_selection if pid in part_ids]
-    
-        selection = st.multiselect(
-            "Select Parts to Order (live filtered)",
-            options=part_ids,
-            format_func=lambda pid: labels.get(pid, pid),
-            default=valid_previous_selection,
-            key="part_selector"
-        )
-        st.session_state.previous_selection = selection
+    part_ids = filtered["Part #"].tolist()
+labels = dict(zip(part_ids, filtered["Label"]))
+
+# Keep only valid selections based on current results
+valid_previous_selection = [pid for pid in st.session_state.previous_selection if pid in part_ids]
+
+# Always show the multiselect if we have filtered results
+selection = st.multiselect(
+    "Select Parts to Order (live filtered)",
+    options=part_ids,
+    format_func=lambda pid: labels.get(pid, pid),
+    default=valid_previous_selection,
+    key="part_selector"
+)
+
+# Update session state with latest selection
+st.session_state.previous_selection = selection
+
+# Use session state to continue showing Step 2 and 3
+selection = st.session_state.previous_selection
+
 
 
 
@@ -124,7 +128,7 @@ if not filtered.empty:
             order_list.append({
                 "Part #": part_num,
                 "Part Name": part_row["Part Name"],
-                "Model Name": ", ".join(compatibility_map.get(part_num, [part_row["Model Name"]])),
+               "Model Name": part_row["Model Name"],
                 "Quantity": qty
             })
 
