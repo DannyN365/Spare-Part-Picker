@@ -35,12 +35,19 @@ if (
     model_number != st.session_state.last_model_number
     or model_name != st.session_state.last_model_name
 ):
+    if not model_number and not model_name:
+        st.session_state.previous_selection = []
+
+):
     st.session_state.previous_selection = []
 
 # Update last known inputs
 st.session_state.last_model_number = model_number
 st.session_state.last_model_name = model_name
 
+
+if st.button("🔄 Reset Selection"):
+    st.session_state.previous_selection = []
 
 # === Filter Matching Models ===
 filtered = pd.DataFrame()
