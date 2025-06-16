@@ -49,7 +49,6 @@ if st.button("🔄 Reset Selection"):
             del st.session_state[key]
     st.session_state.previous_selection = []
 
-
 # === Filter Matching Models ===
 filtered = pd.DataFrame()
 if model_number:
@@ -92,43 +91,30 @@ if not filtered.empty:
         default=valid_previous_selection,
         key="part_selector"
     )
-# After all filtering:
+
+    # Update session state with combined unique parts
+    st.session_state.previous_selection = list(set(st.session_state.previous_selection + selection))
+
 if (model_number or model_name) and filtered.empty:
     st.warning("No matches found. Please refine your search.")
 
-# ✅ Always update session selection after filtering
-if 'selection' in locals():
-    st.session_state.previous_selection = list(set(st.session_state.previous_selection + selection))
-
-
-# === Always use full selection for Step 2 and 3 ===
-selection = st.session_state.previous_selection
+# === Use full selection for Step 2 and 3 ===
+selection = [pid for pid in st.session_state.previous_selection if not df[df["Part #"] == pid].empty]
 
 if selection:
-    st.subheader("🔗 Compatibility Overview")
+    st.header("Step 2: Review and Quantity")
+    order_list = []
+
     for part_num in selection:
         match = df[df["Part #"] == part_num]
         if match.empty:
+            st.warning(f"⚠️ Part {part_num} is no longer available in the dataset.")
             continue
-        part_name = match["Part Name"].values[0]
-        models = compatibility_map.get(part_num, [])
-        with st.expander(f"{part_num} – {part_name}"):
-            st.dataframe(pd.DataFrame(models, columns=["Compatible Model"]), use_container_width=True)
+        part_row = match.iloc[0]
+        qty_key = f"qty_{part_num}"
+        if qty_key not in st.session_state:
+            st.session_state[qty_key] = 1
 
-selection = [pid for pid in st.session_state.previous_selection if not df[df["Part #"] == pid].empty]
-    
-    
-st.header("Step 2: Review and Quantity")
-order_list = []
-for part_num in selection:
-    match = df[df["Part #"] == part_num]
-    if match.empty:
-        continue
-    part_row = match.iloc[0]
-    qty_key = f"qty_{part_num}"
-    if qty_key not in st.session_state:
-        st.session_state[qty_key] = 1
-        
         qty = st.number_input(
             f"Qty for {part_num} | {part_row['Part Name']}",
             min_value=1, step=1,
@@ -138,7 +124,7 @@ for part_num in selection:
         order_list.append({
             "Part #": part_num,
             "Part Name": part_row["Part Name"],
-            "Model Name": part_row["Model Name"],  # Only show used model
+            "Model Name": part_row["Model Name"],
             "Quantity": qty
         })
 
@@ -147,4 +133,9 @@ for part_num in selection:
         export_df = pd.DataFrame(order_list)
         st.dataframe(export_df, use_container_width=True)
         csv = export_df.to_csv(index=False).encode("utf-8")
-        st.download_button("📥 Download as CSV", data=csv, file_name="spare_parts_order.csv", mime="text/csv")
+        st.download_button(
+            "📥 Download as CSV",
+            data=csv,
+            file_name="spare_parts_order.csv",
+            mime="text/csv"
+        )
