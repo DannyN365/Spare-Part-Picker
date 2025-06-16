@@ -96,8 +96,10 @@ if not filtered.empty:
 if (model_number or model_name) and filtered.empty:
     st.warning("No matches found. Please refine your search.")
 
-    # Update selection into session state
+# ✅ Always update session selection after filtering
+if 'selection' in locals():
     st.session_state.previous_selection = list(set(st.session_state.previous_selection + selection))
+
 
 # === Always use full selection for Step 2 and 3 ===
 selection = st.session_state.previous_selection
@@ -113,6 +115,9 @@ if selection:
         with st.expander(f"{part_num} – {part_name}"):
             st.dataframe(pd.DataFrame(models, columns=["Compatible Model"]), use_container_width=True)
 
+selection = [pid for pid in st.session_state.previous_selection if not df[df["Part #"] == pid].empty]
+    
+    
     st.header("Step 2: Review and Quantity")
     order_list = []
     for part_num in selection:
