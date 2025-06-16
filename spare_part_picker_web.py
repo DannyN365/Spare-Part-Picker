@@ -118,7 +118,7 @@ if selection:
 selection = [pid for pid in st.session_state.previous_selection if not df[df["Part #"] == pid].empty]
     
     
-    st.header("Step 2: Review and Quantity")
+st.header("Step 2: Review and Quantity")
     order_list = []
     for part_num in selection:
         match = df[df["Part #"] == part_num]
