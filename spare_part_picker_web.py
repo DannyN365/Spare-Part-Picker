@@ -101,22 +101,21 @@ if (model_number or model_name) and filtered.empty:
 # === Use full selection for Step 2 and 3 ===
 selection = [pid for pid in st.session_state.previous_selection if not df[df["Part #"] == pid].empty]
 
-st.subheader("🔗 Compatibility Overview")
-for part_num in selection:
-    match = df[df["Part #"] == part_num]
-    if match.empty:
-        continue
-    part_name = match["Part Name"].values[0]
-    models = compatibility_map.get(part_num, [])
-    with st.expander(f"{part_num} – {part_name}"):
-        st.dataframe(pd.DataFrame(models, columns=["Compatible Model"]), use_container_width=True)
-
-export_placeholder = st.empty()
-
 if selection:
+    # --- Compatibility Overview ---
+    st.subheader("🔗 Compatibility Overview")
+    for part_num in selection:
+        match = df[df["Part #"] == part_num]
+        if match.empty:
+            continue
+        part_name = match["Part Name"].values[0]
+        models = compatibility_map.get(part_num, [])
+        with st.expander(f"{part_num} – {part_name}"):
+            st.dataframe(pd.DataFrame(models, columns=["Compatible Model"]), use_container_width=True)
+
+    # --- Step 2: Quantity Selection ---
     st.header("Step 2: Review and Quantity")
     order_list = []
-
     for part_num in selection:
         match = df[df["Part #"] == part_num]
         if match.empty:
@@ -140,14 +139,18 @@ if selection:
             "Quantity": qty
         })
 
-with export_placeholder:
-    st.header("Step 3: Export")
-    st.dataframe(export_df, use_container_width=True)
-    csv = export_df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "📥 Download as CSV",
-        data=csv,
-        file_name="spare_parts_order.csv",
-        mime="text/csv"
-    )
+    # --- Step 3: Export ---
+    export_placeholder = st.empty()
 
+    if order_list:
+        with export_placeholder:
+            st.header("Step 3: Export")
+            export_df = pd.DataFrame(order_list)
+            st.dataframe(export_df, use_container_width=True)
+            csv = export_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                "📥 Download as CSV",
+                data=csv,
+                file_name="spare_parts_order.csv",
+                mime="text/csv"
+            )
